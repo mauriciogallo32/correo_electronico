@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recetas</title>
+    <link rel="stylesheet" href="/static/css/index.css"> <!-- Agrega tu archivo CSS personalizado aquí -->
+</head>
+<body>
+    <header>
+        <h1>Recetas</h1>
+    </header>
+
+    <main>
+        <section id="agregar-receta">
+            <h2>Agregar nueva receta</h2>
+            <form id="form-agregar">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="ingredientes">Ingredientes (separados por comas):</label>
+                    <textarea id="ingredientes" name="ingredientes" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pasos">Pasos:</label>
+                    <textarea id="pasos" name="pasos" required></textarea>
+                </div>
+                <button type="submit">Agregar receta</button>
+            </form>
+        </section>
+
+        <section id="listado-recetas">
+            <h2>Listado de recetas</h2>
+            <div id="recetas"></div>
+        </section>
+    </main>
+
+    <footer>
+        <button id="enviar-correo" onclick="enviarCorreo()">Enviar correo con recetas</button>
+        <button id="theme-toggle" class="theme-toggle">Cambiar tema</button>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            cargarRecetas();
+
+            document.getElementById('form-agregar').addEventListener('submit', function(event) {
+                event.preventDefault();
+                agregarReceta();
+            });
+
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+            });
+        });
+
+        function cargarRecetas() {
+            fetch('/recetas')
+                .then(response => response.json())
+                .then(data => {
+                    const recetasDiv = document.getElementById('recetas');
+                    recetasDiv.innerHTML = '';
+
+                    data.forEach(receta => {
+                        const recetaElement = document.createElement('div');
+                        recetaElement.classList.add('receta');
+                        recetaElement.innerHTML = `<strong>${receta.nombre}</strong><br>
+                                                   <span>Ingredientes: ${receta.ingredientes}</span><br>
+                                                   <span>Pasos: ${receta.pasos}</span><br><br>`;
+                        recetasDiv.appendChild(recetaElement);
+                    });
+                });
+        }
+
+        function agregarReceta() {
+            const nombre = document.getElementById('nombre').value;
+            const ingredientes = document.getElementById('ingredientes').value;
+            const pasos = document.getElementById('pasos').value;
+
+            fetch('/recetas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, ingredientes, pasos })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                cargarRecetas();
+                document.getElementById('form-agregar').reset();
+            });
+        }
+
+        function enviarCorreo() {
+            if (confirm("¿Estás seguro de enviar el correo con las recetas?")) {
+                fetch('/enviar_correo', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
